@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>REQ-27/02 – Protocolo Requiem</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+
+    <!-- Fonte "tecno-vintage" -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --green: #00ff7f;
+            --green-dim: #00aa55;
+            --bg: #000000;
+            --red: #ff3b3b;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background: var(--bg);
+            color: var(--green);
+            font-family: "Share Tech Mono", monospace;
+            overflow: hidden;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: repeating-linear-gradient(to bottom,
+                    rgba(0, 255, 100, 0.05) 0px,
+                    rgba(0, 255, 100, 0.05) 3px,
+                    rgba(0, 0, 0, 0) 4px);
+            animation: flicker 4s infinite;
+            z-index: 0;
+        }
+
+        @keyframes flicker {
+            0% {
+                opacity: 0.7;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.7;
+            }
+        }
+
+        /* ========= HEADER / LOGO UMBRELLA ========= */
+
+        .umbrella-header {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .umbrella-logo-svg {
+            width: 110px;
+            max-width: 30vw;
+            display: block;
+            filter: drop-shadow(0 0 8px #00ff7f88);
+            margin-top: 4px;
+        }
+
+        .umbrella-header-text {
+            margin-top: 4px;
+            margin-bottom: 4px;
+            font-size: 0.7rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--green-dim);
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        /* Retângulo de “moldura” atrás da logo */
+        .umbrella-header::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            max-width: 220px;
+            margin: 0 auto;
+            border: 1px solid rgba(0, 255, 127, 0.25);
+            border-radius: 6px;
+            box-shadow: 0 0 12px #00ff7f33;
+            opacity: 0.6;
+        }
+
+        .terminal-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 960px;
+            height: 100%;
+            max-height: 640px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .terminal-frame {
+            margin-top: 5%;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top, #022 0%, #000 55%, #000 100%);
+            border: 1px solid var(--green-dim);
+            box-shadow:
+                0 0 12px #00ff7f55,
+                0 0 28px #00ff7f33,
+                inset 0 0 32px #00ff7f11;
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: crtFlicker 4s infinite;
+        }
+
+        /* Scanlines internas */
+        .terminal-frame::before {
+            content: "";
+            pointer-events: none;
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.15) 50%,
+                    rgba(0, 0, 0, 0.05) 50%);
+            background-size: 100% 3px;
+            mix-blend-mode: multiply;
+            opacity: 0.6;
+            z-index: 2;
+        }
+
+        /* Vignette */
+        .terminal-frame::after {
+            content: "";
+            position: absolute;
+            inset: -20px;
+            background: radial-gradient(circle, transparent 60%, #000 100%);
+            pointer-events: none;
+            opacity: 0.8;
+            z-index: 1;
+        }
+
+        .terminal-inner {
+            position: relative;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+        }
+
+        header.terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--green-dim);
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+            letter-spacing: 0.12em;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .umbrella-mark {
+            width: 9px;
+            height: 9px;
+            border-radius: 2px;
+            border: 1px solid var(--green);
+            position: relative;
+        }
+
+        .umbrella-mark::before,
+        .umbrella-mark::after {
+            content: "";
+            position: absolute;
+            inset: 2px;
+            border-radius: 1px;
+            border: 1px solid var(--green);
+            opacity: 0.6;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .status-pill {
+            border: 1px solid var(--green-dim);
+            padding: 1px 6px;
+            border-radius: 999px;
+            font-size: 0.6rem;
+        }
+
+        .status-pill--critical {
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        main.terminal-main {
+            flex: 1;
+            overflow: hidden auto;
+            padding-right: 8px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            min-height: 0;
+        }
+
+        #screen {
+            min-height: 100%;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            margin-left: 2px;
+            background: var(--green);
+            animation: blink 0.8s steps(1) infinite;
+            vertical-align: baseline;
+        }
+
+        @keyframes blink {
+
+            0%,
+            45% {
+                opacity: 1;
+            }
+
+            46%,
+            100% {
+                opacity: 0;
+            }
+        }
+
+        footer.terminal-footer {
+            border-top: 1px solid var(--green-dim);
+            padding-top: 4px;
+            margin-top: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 0.72rem;
+        }
+
+        .footer-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .label {
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--green-dim);
+        }
+
+        #countdown {
+            color: var(--green);
+        }
+
+        .tagline {
+            text-align: right;
+            opacity: 0.7;
+        }
+
+        @keyframes crtFlicker {
+
+            0%,
+            100% {
+                opacity: 1;
+                filter: none;
+            }
+
+            50% {
+                opacity: 0.97;
+                filter: hue-rotate(-3deg) saturate(1.1);
+            }
+        }
+
+        .activity-bar {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 3px;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, #00ff7f, transparent);
+            background-size: 100% 48px;
+            animation: activityScroll 1.6s linear infinite;
+            opacity: 0.7;
+            z-index: 4;
+        }
+
+        @keyframes activityScroll {
+            0% {
+                background-position-y: 0;
+            }
+
+            100% {
+                background-position-y: 48px;
+            }
+        }
+
+        .hint {
+            color: var(--green-dim);
+            font-size: 0.75rem;
+            margin-bottom: 8px;
+        }
+
+        /* Scrollbar estilo terminal Umbrella */
+        .terminal-main::-webkit-scrollbar {
+            width: 8px;
+            background: #001a00;
+        }
+
+        .terminal-main::-webkit-scrollbar-track {
+            background: #001a00;
+        }
+
+        .terminal-main::-webkit-scrollbar-thumb {
+            background: #00aa55;
+            border-radius: 4px;
+            border: 1px solid #00ff7f;
+        }
+
+        .terminal-main::-webkit-scrollbar-thumb:hover {
+            background: #00ff7f;
+
+        }
+
+        .terminal-main {
+            scrollbar-width: thin;
+            scrollbar-color: #00aa55 #001a00;
+
+        }
+
+        /* ===== Barra de progresso do protocolo ===== */
+        .progress-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            border-radius: 999px;
+            background: rgba(0, 255, 127, 0.08);
+            box-shadow: 0 0 6px #00ff7f33 inset;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #007f3f, #00ff7f);
+            box-shadow: 0 0 8px #00ff7f88;
+            transition: width 0.4s ease-out;
+        }
+
+        .progress-text {
+            font-variant-numeric: tabular-nums;
+            min-width: 52px;
+            text-align: right;
+        }
+
+        /* ========= RESPONSIVO (MOBILE) ========= */
+
+        @media (max-width: 768px) {
+
+            html,
+            body {
+                height: 100%;
+                overflow: auto;
+            }
+
+            body {
+                padding: 0;
+                align-items: stretch;
+                justify-content: stretch;
+            }
+
+            .terminal-container {
+                max-width: 100%;
+                max-height: none;
+                width: 100%;
+                height: auto;
+                min-height: 100vh;
+            }
+
+            .terminal-frame {
+                max-width: 100%;
+                max-height: none;
+                width: 100%;
+                height: auto;
+                min-height: calc(100vh - 120px);
+                border-radius: 0;
+                box-shadow:
+                    0 0 12px #00ff7f33,
+                    inset 0 0 32px #00ff7f11;
+                padding: 10px 10px 8px;
+            }
+
+            header.terminal-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+                font-size: 0.62rem;
+                letter-spacing: 0.08em;
+            }
+
+            .header-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            main.terminal-main {
+                font-size: 0.78rem;
+                padding-right: 4px;
+            }
+
+            footer.terminal-footer {
+                font-size: 0.68rem;
+            }
+
+            .footer-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .tagline {
+                text-align: left;
+            }
+
+            .activity-bar {
+                display: none;
+            }
+
+            .umbrella-header {
+                margin-bottom: 6px;
+            }
+
+            .umbrella-header-text {
+                font-size: 0.6rem;
+                letter-spacing: 0.18em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header.terminal-header {
+                font-size: 0.6rem;
+            }
+
+            main.terminal-main {
+                font-size: 0.72rem;
+            }
+
+            .hint {
+                font-size: 0.7rem;
+            }
+
+            .umbrella-logo-svg {
+                width: 90px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="scanline"></div>
+
+    <div class="terminal-container">
+        <!-- HEADER / LOGO UMBRELLA -->
+        <div class="umbrella-header">
+            <svg class="umbrella-logo-svg" viewBox="0 0 100 100" aria-label="Umbrella Corporation">
+                <!-- círculo externo -->
+                <circle cx="50" cy="50" r="47" fill="none" stroke="#00ff7f" stroke-width="2" />
+                <!-- oito “pétalas” verdes alternadas, estilo guarda-chuva / umbrella -->
+                <g>
+                    <path d="M50 50 L50 5 A45 45 0 0 1 78 22 Z" fill="#00ff7f" />
+                    <path d="M50 50 L78 22 A45 45 0 0 1 95 50 Z" fill="#007f3f" />
+                    <path d="M50 50 L95 50 A45 45 0 0 1 78 78 Z" fill="#00ff7f" />
+                    <path d="M50 50 L78 78 A45 45 0 0 1 50 95 Z" fill="#007f3f" />
+                    <path d="M50 50 L50 95 A45 45 0 0 1 22 78 Z" fill="#00ff7f" />
+                    <path d="M50 50 L22 78 A45 45 0 0 1 5 50 Z" fill="#007f3f" />
+                    <path d="M50 50 L5 50 A45 45 0 0 1 22 22 Z" fill="#00ff7f" />
+                    <path d="M50 50 L22 22 A45 45 0 0 1 50 5 Z" fill="#007f3f" />
+                </g>
+                <!-- miolo -->
+                <circle cx="50" cy="50" r="6" fill="#000" stroke="#00ff7f" stroke-width="1.5" />
+            </svg>
+            <div class="umbrella-header-text">
+                UMBRELLA&nbsp;&nbsp;CORPORATION
+            </div>
+        </div>
+
+        <!-- TERMINAL CRT -->
+        <div class="terminal-frame">
+            <div class="activity-bar"></div>
+            <div class="terminal-inner">
+                <header class="terminal-header">
+                    <div class="header-left">
+                        <div class="umbrella-mark"></div>
+                        <span>UMBRELLA//SEC_NET NODE-REQ</span>
+                    </div>
+                    <div class="header-right">
+                        <span class="status-pill status-pill--critical">ACESSO NÃO AUTORIZADO</span>
+                        <span id="clock"></span>
+                    </div>
+                </header>
+
+                <main class="terminal-main">
+                    <div class="hint">
+                        [AGUARDANDO INTERAÇÃO DO AGENTE...]
+                        Clique em qualquer lugar ou pressione uma tecla para iniciar a decodificação do arquivo
+                        REQ-27/02.
+                    </div>
+                    <div id="screen"></div><span class="cursor" id="cursor"></span>
+                </main>
+
+                <footer class="terminal-footer">
+                    <div class="footer-row">
+                        <span class="label">PROTOCOLO</span>
+                        <span>REQ-27/02 :: PROTOCOL REQUIEM</span>
+                    </div>
+
+                    <div class="footer-row">
+                        <span class="label">CONTAGEM REGRESSIVA ATÉ 27/02/2026</span>
+                        <span id="countdown"></span>
+                    </div>
+
+                    <div class="footer-row">
+                        <span class="label">PROGRESSO</span>
+                        <div class="progress-wrapper">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                            <span id="progressPercent" class="progress-text">0.0%</span>
+                        </div>
+                    </div>
+
+                    <div class="footer-row tagline">
+                        <span>“A verdade floresce na escuridão.” // UMBRELLA INTERNAL MOTTO</span>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================
+        // TEXTO DO DOCUMENTO
+        // ==========================
+        const docText = `
+ARQUIVO ANEXO – COMUNICAÇÃO NÃO AUTORIZADA
+PROTOCOLO REQ-27/02
+
+Canal: UMBRA-LINK // Classe: CONFIDENCIAL
+Rota de Roteamento: [D.S.O.] → [UMB-SRV/BLACKBOX] → [AGENTE-LOCAL]
+
+---
+
+Ao agente [Eduardo N. Paiva],
+
+A seguir constam duas transmissões recuperadas. A origem é divergente, mas ambas cruzam o mesmo ponto: sua autorização antecipada para o Protocolo Requiem.
+
+Leitura não recomendada em terminais públicos.
+Monitoramento passivo da Umbrella Corporation em andamento…
+
+---
+
+Transmissão 01 – D.S.O. / Origem Confirmada: Leon S. Kennedy
+
+Agente,
+
+Recebi sua designação mais cedo do que o esperado. A autorização para acessar o Requiem já está garantida, mesmo que o sistema não abra a porta completamente antes de 27/02.
+Não estranhe. Sistemas assim adoram atrasar o inevitável.
+
+Considere isso uma convocação antecipada. Você já faz parte da operação. A chave ainda está em quarentena, mas o direito a ela já é seu. Só aguarde a liberação oficial e mantenha seus instintos afiados. O que vem por aí não costuma pegar leve.
+
+Quando a data chegar, esteja pronto.
+Não deixe ninguém interferir, e principalmente… não tente adquirir outra chave. O protocolo não lida bem com duplicidades e pode gerar uma bagunça burocrática digna da Umbrella.
+
+Nos vemos no campo,
+Leon S. Kennedy
+Divisão de Operações de Segurança – D.S.O.
+
+[ANEXO TÁTICO: STATUS DO AGENTE – ATIVO / CONFIABILIDADE: ELEVADA]
+[OBS: HISTÓRICO EM INCIDENTES CRÍTICOS ACEITO COMO REFERÊNCIA]
+
+---
+
+Transmissão 02 – Origem Encoberta / Identidade Presumida: Ada Wong
+
+Agente,
+
+Parece que alguém andou recebendo convites antes da hora.
+O Requiem já foi assegurado para você. A chave está apenas aguardando o momento certo para ser liberada, como todo bom segredo.
+
+Não se preocupe com o atraso. Às vezes o valor de uma informação está justamente no tempo em que ela permanece fechada.
+O importante é: o acesso é seu. Nada de compras duplicadas, a menos que você queira lidar com mais camadas do que o necessário.
+E confie em mim… algumas portas, quando abertas duas vezes, cobram caro.
+
+Esteja atento no dia 27/02.
+Quando o sistema liberar a chave, aproveite.
+Nem sempre recebemos oportunidades assim tão… garantidas.
+
+— Ada Wong
+
+[NOTA DE SISTEMA: ORIGEM OFUSCADA POR “BLACK LACE” / RASTREAMENTO IMPOSSÍVEL]
+[RECOMENDAÇÃO: CONFIAR NA MENSAGEM, DESCONFIAR DO MOTIVO]
+
+---
+
+Fim da Comunicação
+Encerramento do Arquivo REQ-27/02
+
+Registro adicional //
+
+• Nível de Ameaça Regional: ELEVADO
+• Status do Agente [E.N. PAIVA]: AUTORIZADO (PENDENTE CHAVE REQUIEM)
+• Alerta: Qualquer tentativa de duplicação de acesso acionará auditoria Umbrella de Nível Vermelho.
+
+Aguarde a liberação oficial.
+O sistema observa.
+
+Chave: 
+
+🔑*****-*****-***** (Mantenha reservada).
+
+— Stefany S. Gomes
+
+    `.trimStart();
+
+        const screenEl = document.getElementById("screen");
+        const cursorEl = document.getElementById("cursor");
+
+        let charIndex = 0;
+        const typeSpeed = 35;
+        const startDelay = 400;
+
+        // ==========================
+        // ÁUDIO – SOM SUAVE DE DIGITAÇÃO
+        // ==========================
+        let audioCtx = null;
+
+        function initAudioContext() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) audioCtx = new AudioContext();
+            }
+        }
+
+        function playTypeSound() {
+            if (!audioCtx) return;
+
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(280 + Math.random() * 60, now);
+
+            gain.gain.setValueAtTime(0.04, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.10);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start(now);
+            osc.stop(now + 0.10);
+        }
+
+        // ==========================
+        // EFEITO MÁQUINA DE ESCREVER
+        // ==========================
+        let typingStarted = false;
+
+        function typeNextChar() {
+            if (charIndex >= docText.length) {
+                cursorEl.style.display = "inline-block";
+                return;
+            }
+
+            const nextChar = docText.charAt(charIndex);
+            screenEl.textContent += nextChar;
+            charIndex++;
+
+            if (nextChar !== " " && nextChar !== "\n") {
+                playTypeSound();
+            }
+
+            const container = screenEl.parentElement;
+            container.scrollTop = container.scrollHeight;
+
+            let delay = typeSpeed;
+            if (nextChar === "\n" && Math.random() < 0.25) {
+                delay = typeSpeed * 6;
+            }
+
+            setTimeout(typeNextChar, delay);
+        }
+
+        function startTyping() {
+            if (typingStarted) return;
+            typingStarted = true;
+
+            initAudioContext();
+            const hintEl = document.querySelector(".hint");
+            if (hintEl) hintEl.remove();
+
+            setTimeout(typeNextChar, startDelay);
+        }
+
+        window.addEventListener("click", startTyping);
+        window.addEventListener("keydown", startTyping);
+
+        // ==========================
+        // RELÓGIO
+        // ==========================
+        const clockEl = document.getElementById("clock");
+        function updateClock() {
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, "0");
+
+            const day = pad(now.getDate());
+            const month = pad(now.getMonth() + 1);
+            const year = now.getFullYear();
+
+            const hours = pad(now.getHours());
+            const minutes = pad(now.getMinutes());
+            const seconds = pad(now.getSeconds());
+
+            clockEl.textContent = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // ==========================
+        // CONTAGEM REGRESSIVA + PROGRESSO
+        // ==========================
+        const countdownEl = document.getElementById("countdown");
+        const progressFillEl = document.getElementById("progressFill");
+        const progressPercentEl = document.getElementById("progressPercent");
+
+        const targetDate = new Date("2026-02-27T00:00:00-03:00");
+        const progressStartDate = new Date("2025-03-01T00:00:00-03:00");
+
+        function updateCountdown() {
+            const now = new Date();
+            let diff = targetDate.getTime() - now.getTime();
+
+            if (diff <= 0) {
+                countdownEl.innerHTML = `T-000d 00h 00m 00s :: PROTOCOL ACTIVE`;
+                countdownEl.style.color = "#ff3b3b";
+
+                if (progressFillEl && progressPercentEl) {
+                    progressFillEl.style.width = "100%";
+                    progressPercentEl.textContent = "100.0%";
+                }
+                return;
+            }
+
+            const msInSecond = 1000;
+            const msInMinute = msInSecond * 60;
+            const msInHour = msInMinute * 60;
+            const msInDay = msInHour * 24;
+
+            const days = Math.floor(diff / msInDay);
+            diff -= days * msInDay;
+
+            const hours = Math.floor(diff / msInHour);
+            diff -= hours * msInHour;
+
+            const minutes = Math.floor(diff / msInMinute);
+            diff -= minutes * msInMinute;
+
+            const seconds = Math.floor(diff / msInSecond);
+
+            const pad = (n, size = 2) => String(n).padStart(size, "0");
+
+            countdownEl.textContent =
+                `T-${pad(days, 3)}d ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s :: LIBERAÇÃO CHAVE REQUIEM`;
+
+            if (progressFillEl && progressPercentEl) {
+                const totalSpan = targetDate.getTime() - progressStartDate.getTime();
+                let elapsed = now.getTime() - progressStartDate.getTime();
+
+                if (elapsed < 0) elapsed = 0;
+                if (elapsed > totalSpan) elapsed = totalSpan;
+
+                let percent = totalSpan > 0 ? (elapsed / totalSpan) * 100 : 100;
+                if (percent < 0) percent = 0;
+                if (percent > 100) percent = 100;
+
+                progressFillEl.style.width = `${percent.toFixed(1)}%`;
+                progressPercentEl.textContent = `${percent.toFixed(1)}%`;
+            }
+        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+    </script>
+</body>
+
+</html>
